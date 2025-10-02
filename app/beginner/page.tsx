@@ -1,4 +1,5 @@
-// app/beginner/page.tsx
+'use client';
+
 import React from "react";
 import HeaderBar from "@/components/HeaderBar";
 import BeginnerPanel from "@/components/BeginnerPanel";
@@ -14,14 +15,13 @@ export default function BeginnerPage(): JSX.Element {
   return (
     <main className="container">
       <HeaderBar />
-      <BeginnerPanel onChange={() => {}} />
+      <BeginnerPanel /> {/* no onChange prop */}
       <BeginnerSettings />
       <div className="grid grid-2" style={{ marginTop: 16 }}>
         <section className="card">
           <h2 className="h1">Top Signals (Beginner)</h2>
           <p className="sub">
-            Safety-Only + Plain English. Probability is an estimate; not
-            financial advice.
+            Safety-Only + Plain English. Probability is an estimate; not financial advice.
           </p>
           <TopSignals />
         </section>
