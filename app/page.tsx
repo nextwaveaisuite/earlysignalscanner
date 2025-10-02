@@ -1,4 +1,3 @@
-// app/page.tsx
 import React from "react";
 import TopSignals from "@/components/TopSignals";
 import AlertFeed from "@/components/AlertFeed";
@@ -9,7 +8,7 @@ export default function Page(): JSX.Element {
   return (
     <main className="container">
       <HeaderBar />
-      <BeginnerPanel onChange={() => {}} />
+      <BeginnerPanel /> {/* no onChange prop */}
       <div className="grid grid-2" style={{ marginTop: 16 }}>
         <section className="card">
           <h2 className="h1">Top Signals</h2>
@@ -29,8 +28,7 @@ export default function Page(): JSX.Element {
         </aside>
       </div>
       <div className="footer">
-        Analytics are probabilistic and educational—this is not financial
-        advice.
+        Analytics are probabilistic and educational—this is not financial advice.
       </div>
     </main>
   );
