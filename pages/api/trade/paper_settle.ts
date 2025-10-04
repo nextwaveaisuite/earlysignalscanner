@@ -1,22 +1,39 @@
+// pages/api/trade/paper_settle.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supa } from '@/lib/db';
+import { serverSupabase } from '@/lib/db';
 
-function today(){ return new Date().toISOString().slice(0,10); }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse){
-  if (req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
-  const { id, outcome, pnl } = req.body || {}; // outcome: 'TP'|'SL'
-  if (!id || !outcome) return res.status(400).json({error:'id and outcome required'});
+  try {
+    const supa = serverSupabase();
+    const { id, exit_price } = req.body || {};
+    if (!id || typeof exit_price !== 'number') {
+      return res.status(400).json({ ok: false, error: 'id and exit_price required' });
+    }
 
-  const { error: e1 } = await supa.from('paper_orders').update({ status: outcome==='TP'?'tp_hit':'sl_hit' }).eq('id', id);
-  if (e1) return res.status(500).json({error:e1});
+    const { data: row, error: fetchErr } = await supa
+      .from('paper_trades')
+      .select('id, qty, entry_price, side')
+      .eq('id', id)
+      .single();
 
-  const d = today();
-  const { data: row } = await supa.from('risk_ledger').select('realized_pnl').eq('d', d).limit(1);
-  const cur = Number(row?.[0]?.realized_pnl||0);
-  const next = cur + Number(pnl||0);
-  const { error: e2 } = await supa.from('risk_ledger').upsert({ d, realized_pnl: next }, { onConflict:'d' });
-  if (e2) return res.status(500).json({error:e2});
+    if (fetchErr || !row) return res.status(404).json({ ok: false, error: fetchErr?.message || 'Trade not found' });
 
-  res.json({ ok:true, realized_pnl: next });
-}
+    const pnl =
+      (row.side === 'buy'
+        ? (exit_price - row.entry_price) * row.qty
+        : (row.entry_price - exit_price) * row.qty);
+
+    const { error: updErr } = await supa
+      .from('paper_trades')
+      .update({ exit_price, pnl, status: 'closed' })
+      .eq('id', id);
+
+    if (updErr) return res.status(500).json({ ok: false, error: updErr.message });
+    return res.status(200).json({ ok: true, data: { id, exit_price, pnl } });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, error: e?.message || 'unknown' });
+  }
+        }
+           
