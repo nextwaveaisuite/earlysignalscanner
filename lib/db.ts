@@ -1,42 +1,47 @@
 // lib/db.ts
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-// Read public envs (safe for browser + server)
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+/**
+ * 🚀 Pre-filled Supabase credentials
+ * Replace with new keys later if you rotate them.
+ */
+const PUBLIC_URL = "https://vqowzezzmxzlbaobxlbh.supabase.co";
+const PUBLIC_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxb3d6ZXp6bXh6bGJhb2J4bGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODYyNzgsImV4cCI6MjA3NDk2MjI3OH0.wD6aIeMNiiKnanl7YvPsXuVCPA2y5HuzoUWnxF40Yq8";
 
-// Create a nullable client so SSR/ISR doesn't crash if envs are missing
-export const supabase: SupabaseClient | null =
-  url && anon ? createClient(url, anon) : null;
+const SERVER_URL = "https://vqowzezzmxzlbaobxlbh.supabase.co";
+const SERVICE_ROLE =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxb3d6ZXp6bXh6bGJhb2J4bGJoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTM4NjI3OCwiZXhwIjoyMDc0OTYyMjc4fQ.S0laJsvGgLAb5EzCIij81_cO59yqLjMlf-hc8g0-vSc";
 
-// ✅ Back-compat alias for existing imports in your project:
-//    import { supa } from '@/lib/db'
-export const supa = supabase;
-
-// Optional helpers (safe patterns for calling code)
-export function requireSupabase(): SupabaseClient {
-  if (!supabase) {
-    throw new Error(
-      'Supabase not configured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    );
+/**
+ * Unified supa client — safe for client and server.
+ */
+function makeClient(): SupabaseClient {
+  const isServer = typeof window === "undefined";
+  if (isServer && SERVER_URL && SERVICE_ROLE) {
+    return createClient(SERVER_URL, SERVICE_ROLE, {
+      auth: { persistSession: false },
+    });
   }
-  return supabase;
+  return createClient(PUBLIC_URL, PUBLIC_ANON, {
+    auth: { persistSession: false },
+  });
 }
 
-export async function safeQuery<T>(
-  fn: (c: SupabaseClient) => Promise<T>,
-  fallback: T
-): Promise<T> {
-  if (!supabase) return fallback;
-  try {
-    return await fn(supabase);
-  } catch {
-    return fallback;
-  }
+/**
+ * Default export — used across most of your app.
+ */
+export const supa: SupabaseClient = makeClient();
+
+/**
+ * Explicit server-only client — use this in API routes.
+ */
+export function serverSupabase(): SupabaseClient {
+  return createClient(SERVER_URL || PUBLIC_URL, SERVICE_ROLE || PUBLIC_ANON, {
+    auth: { persistSession: false },
+  });
 }
 
-// Re-export the type for convenience
-export type { SupabaseClient } from '@supabase/supabase-js';
-
-// Also provide a default export if any place imports default
-export default supabase;
+export type { SupabaseClient } from "@supabase/supabase-js";
+export default supa;
+    
