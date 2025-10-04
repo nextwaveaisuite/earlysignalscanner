@@ -1,35 +1,23 @@
+// pages/api/alerts.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supa } from '@/lib/db';
+import { serverSupabase } from '@/lib/db';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const today = new Date().toISOString().slice(0,10);
-  const { data: scores } = await supa.from('scores_daily').select('*').eq('dt', today);
+export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const supa = serverSupabase();
+    const since = new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(); // last 24h
 
-  const newAlerts:any[] = [];
-  (scores||[]).forEach((s:any)=>{
-    if ((s.explain?.narrative_delta||0) > 0.8 && (s.explain?.breadth_delta||0)>0.8) {
-      newAlerts.push({ type:'NARRATIVE_BREAKOUT', severity:'critical', title:'Narrative breakout', token_id:s.token_id, details:{...s.explain} });
-    } else if ((s.explain?.breadth_delta||0) > 0.6) {
-      newAlerts.push({ type:'BREADTH_SURGE', severity:'warning', title:'Breadth surge', token_id:s.token_id, details:{...s.explain} });
-    }
-    if (s.risk_level==='GREEN' && (s.explain?.narrative_delta||0)>0.4) {
-      newAlerts.push({ type:'FRESH_LAUNCH_SAFE', severity:'info', title:'Fresh launch safe candidate', token_id:s.token_id, details:{...s.explain} });
-    }
-  });
+    const { data, error } = await supa
+      .from('alerts')
+      .select('created_at, kind, severity, message, token_id')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-  if (newAlerts.length) {
-    const rows = newAlerts.map(a=>({ dt:new Date().toISOString(), ...a }));
-    await supa.from('alerts').insert(rows);
+    if (error) return res.status(500).json({ ok: false, error: error.message });
+    return res.status(200).json({ ok: true, data: data ?? [] });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, error: e?.message || 'unknown' });
   }
-
-  const hook = process.env.DISCORD_WEBHOOK_URL;
-  if (hook){
-    const critical = newAlerts.filter(a=>a.severity==='critical');
-    for (const c of critical){
-      const text = `**${c.title}**\nBreadth +${c.details?.breadth||0}% · Narrative +${c.details?.narrative||0}%`;
-      await fetch(hook, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content: text })});
-    }
-  }
-
-  res.json({ ok:true, created: newAlerts.length });
-}
+                                            }
+                                 
