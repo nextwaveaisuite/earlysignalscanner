@@ -9,15 +9,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     token: r.token,
     symbol: r.symbol,
     name: r.name,
-    score: r.score,
-    risk: r.risk,
-    confidence: r.confidence,
-    sparkline: r.sparkline ?? []
+    score: Number(r.score ?? 0),
+    risk: r.risk ?? null,
+    confidence: Number(r.confidence ?? 0),
+    sparkline: Array.isArray(r.sparkline) ? r.sparkline : [],
   }));
 
-  // If caller asks for object shape
-  if ("withTokens" in req.query || "expanded" in req.query) {
-    return res.status(200).json({ items });
-  }
+  if ("withTokens" in req.query || "expanded" in req.query) return res.status(200).json({ items });
   return res.status(200).json(items);
 }
