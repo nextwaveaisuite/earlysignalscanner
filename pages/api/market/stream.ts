@@ -4,22 +4,37 @@ import { db } from "@/lib/db";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const mode = String(req.query.mode ?? "");
+
     if (mode === "daily-pl") {
-      const { data, error } = await db.dailyPL();
+      // ✅ Fetch daily P/L data
+      const { data, error } = await db
+        .from("daily_pl")
+        .select("*")
+        .order("date", { ascending: true });
+
       if (error) {
         console.error("[/api/market/stream] daily_pl error:", error.message);
-        return res.status(200).json([]); // safe empty
+        return res.status(200).json([]);
       }
-      const items = (data ?? []).map((d: any) => ({
-        date: String(d.date),
-        realized: Number(d.realized ?? 0),
-        unrealized: Number(d.unrealized ?? 0),
-      }));
-      return res.status(200).json(items);
+
+      return res.status(200).json(data || []);
     }
-    return res.status(200).json({ ok: true });
-  } catch (e: any) {
-    console.error("[/api/market/stream] handler error:", e?.message ?? e);
-    return res.status(200).json([]); // safe empty
+
+    // ✅ Default: return top signals (from scores_with_tokens view)
+    const { data, error } = await db
+      .from("scores_with_tokens")
+      .select("*")
+      .order("score", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error("[/api/market/stream] scores_with_tokens error:", error.message);
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json(data || []);
+  } catch (err: any) {
+    console.error("[/api/market/stream] unexpected error:", err.message);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
