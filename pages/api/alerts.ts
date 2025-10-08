@@ -1,23 +1,7 @@
-// pages/api/alerts.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { serverSupabase } from '@/lib/db';
-
-export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const supa = serverSupabase();
-    const since = new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(); // last 24h
-
-    const { data, error } = await supa
-      .from('alerts')
-      .select('created_at, kind, severity, message, token_id')
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) return res.status(500).json({ ok: false, error: error.message });
-    return res.status(200).json({ ok: true, data: data ?? [] });
-  } catch (e: any) {
-    return res.status(500).json({ ok: false, error: e?.message || 'unknown' });
-  }
-                                            }
-                                 
+import type { NextApiRequest, NextApiResponse } from "next";
+export default function handler(_req: NextApiRequest, res: NextApiResponse){
+  res.status(200).json([
+    { symbol: "NOVA", score: 72, message: "Smart money accumulation", confidence: 82, risk: "LOW" },
+    { symbol: "FLUX", score: 55, message: "Narrative trending", confidence: 64, risk: "MEDIUM" }
+  ]);
+}
