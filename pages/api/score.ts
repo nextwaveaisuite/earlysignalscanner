@@ -1,24 +1,8 @@
-// pages/api/score.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { serverSupabase } from '@/lib/db';
-
-export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const supa = serverSupabase();
-    const today = new Date().toISOString().slice(0, 10);
-
-    const { data, error } = await supa
-      .from('scores_daily')
-      .select(
-        "prob_up_4h, composite_score, risk_level, confidence, explain, token_id, tokens:scores_daily_token_id_fkey(symbol,name,chain)"
-      )
-      .eq('dt', today)
-      .order('composite_score', { ascending: false })
-      .limit(50);
-
-    if (error) return res.status(500).json({ ok: false, error: error.message });
-    return res.status(200).json({ ok: true, data: data ?? [] });
-  } catch (e: any) {
-    return res.status(500).json({ ok: false, error: e?.message || 'unknown' });
-  }
+import type { NextApiRequest, NextApiResponse } from "next";
+export default function handler(req: NextApiRequest, res: NextApiResponse){
+  const items = [
+    { token: "0xabc", symbol: "NOVA", name:"Nova", score: 72, confidence: 82, risk:"LOW", sparkline:[1,2,3,4,5] },
+    { token: "0xdef", symbol: "FLUX", name:"Flux", score: 55, confidence: 64, risk:"MEDIUM", sparkline:[5,4,3,2,1] }
+  ];
+  res.status(200).json(req.query.withTokens ? { items } : items);
 }
