@@ -1,84 +1,49 @@
-// lib/serverData.ts
-// SAFE server data helpers: always return [], never throw on SSR.
+import { createClient } from "@supabase/supabase-js";
 
-type Risk = "LOW" | "MEDIUM" | "HIGH" | string | null;
+// === Supabase client setup ===
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vqowzezzmxzlbAobxlbh.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxb3d6ZXp6bXh6bGJhb2J4bGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODYyNzgsImV4cCI6MjA3NDk2MjI3OH0.wD6aIeMNiiKnanl7YvPsXuVCPA2y5HuzoUWnxF40Yq8";
 
-export type Alert = {
-  id?: string;
-  token?: string;
-  symbol?: string;
-  message?: string;
-  score?: number;
-  risk?: Risk;
-  confidence?: number;
-  created_at?: string;
-};
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export type ScoreWithToken = {
-  token?: string;
-  symbol?: string;
-  name?: string;
-  score?: number;
-  risk?: Risk;
-  confidence?: number;
-  sparkline?: number[];
-};
+// === Fetch live alerts ===
+export async function getAlerts() {
+  const { data, error } = await supabase
+    .from("alerts")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export type DailyPLItem = {
-  date: string;
-  realized: number;
-  unrealized: number;
-};
-
-// Determine absolute site URL for server-side fetch
-function baseUrl(): string {
-  // Prefer explicit custom domain
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
-  if (explicit) return explicit;
-  // Vercel sets VERCEL_URL like "<proj>-<hash>.vercel.app"
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  // Dev fallback
-  return "http://localhost:3000";
-}
-
-const noStore: RequestInit = {
-  cache: "no-store",
-  // @ts-ignore Next.js runtime hint is ok
-  next: { revalidate: 0 },
-};
-
-// SAFE fetch: never throws, logs and returns undefined
-async function fetchJSONSafe<T>(path: string): Promise<T | undefined> {
-  try {
-    const url = path.startsWith("http") ? path : `${baseUrl()}${path}`;
-    const res = await fetch(url, noStore);
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error(`[serverData] GET ${path} -> ${res.status}: ${text}`);
-      return undefined;
-    }
-    return (await res.json()) as T;
-  } catch (err: any) {
-    console.error(`[serverData] GET ${path} failed:`, err?.message ?? err);
-    return undefined;
+  if (error) {
+    console.error("[getAlerts] Error:", error.message);
+    return [];
   }
+  return data || [];
 }
 
-export async function getAlerts(): Promise<Alert[]> {
-  const data = await fetchJSONSafe<any>("/api/alerts");
-  const items = Array.isArray(data) ? data : data?.items ?? [];
-  return items as Alert[];
+// === Fetch scores with token metadata ===
+export async function getScores() {
+  const { data, error } = await supabase
+    .from("scores_with_tokens")
+    .select("*")
+    .order("score", { ascending: false });
+
+  if (error) {
+    console.error("[getScores] Error:", error.message);
+    return [];
+  }
+  return data || [];
 }
 
-export async function getScoresWithTokens(): Promise<ScoreWithToken[]> {
-  // Prefer expanded shape but accept flat arrays too
-  const data = await fetchJSONSafe<any>("/api/score?withTokens=1");
-  const items = Array.isArray(data) ? data : data?.items ?? [];
-  return (items ?? []) as ScoreWithToken[];
-}
+// === Fetch daily P/L ===
+export async function getDailyPL() {
+  const { data, error } = await supabase
+    .from("daily_pl")
+    .select("*")
+    .order("date", { ascending: true });
 
-export async function getDailyPL(): Promise<DailyPLItem[]> {
-  const data = await fetchJSONSafe<any>("/api/market/stream?mode=daily-pl");
-  const items = Array.isArray(data) ? data : data?.items ?? [];
-  return (items ?? []) as DailyPLItem[];
+  if (error) {
+    console.error("[getDailyPL] Error:", error.message);
+    return [];
+  }
+  return data || [];
 }
