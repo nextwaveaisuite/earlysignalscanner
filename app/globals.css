@@ -1,51 +1,30 @@
-/* app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Brand theme */
-:root {
-  --bg: #0b1220;        /* deep slate/indigo */
-  --panel: #0f172a;     /* card surface */
-  --border: rgba(255,255,255,0.06);
-  --muted: #94a3b8;     /* slate-400 */
-  --text: #e2e8f0;      /* slate-200 */
-  --accent1: #22d3ee;   /* cyan-400 */
-  --accent2: #fde047;   /* yellow-300 */
-  --glow: 0 10px 30px rgba(34, 211, 238, 0.12);
+:root{
+  --bg:#0b1220; --panel:#0f172a; --border:rgba(255,255,255,.06);
+  --muted:#94a3b8; --text:#e2e8f0; --glow:0 10px 30px rgba(34,211,238,.12);
 }
 
-/* Background gradient similar to the NextWave look */
-.bg-nextwave {
+/* Background gradient */
+.bg-nextwave{
   background:
-    radial-gradient(1200px 600px at 0% 0%, rgba(34,211,238,0.08), transparent 60%),
-    radial-gradient(1000px 500px at 100% 0%, rgba(253,224,71,0.08), transparent 60%),
-    radial-gradient(900px 500px at 50% 110%, rgba(59,130,246,0.10), transparent 60%),
+    radial-gradient(1200px 600px at 0% 0%, rgba(34,211,238,.08), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(253,224,71,.08), transparent 60%),
+    radial-gradient(900px 500px at 50% 110%, rgba(59,130,246,.10), transparent 60%),
     var(--bg);
 }
 
-/* Card primitives */
-.card {
-  @apply rounded-2xl border p-5 md:p-6;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-  border-color: var(--border);
-  box-shadow: var(--glow);
-}
-.card-header { @apply mb-3; }
-.card-title  { @apply text-xl font-semibold text-slate-100; }
-.card-sub    { @apply text-sm text-slate-400; }
-.card-body   { @apply mt-2; }
+html, body{ background:var(--bg); color:var(--text); }
 
-/* Small UI elements */
-.badge {
-  @apply inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium;
-  background: rgba(255,255,255,0.06);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
+/* Cards */
+.card{ @apply rounded-2xl border p-5 md:p-6; background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02)); border-color:var(--border); box-shadow:var(--glow);}
+.card-header{ @apply mb-3; }
+.card-title{ @apply text-xl font-semibold text-slate-100; }
+.card-sub{ @apply text-sm text-slate-400; }
+.card-body{ @apply mt-2; }
 
-/* Typography reset to match original feel */
-html, body { color: var(--text); background: var(--bg); }
-
-/* Utility tweaks for tables/lists/sparklines */
-.table-muted td, .table-muted th { @apply text-slate-300; }
+/* Small UI */
+.badge{ @apply inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium border; border-color:var(--border); background:rgba(255,255,255,.06); color:var(--text); }
