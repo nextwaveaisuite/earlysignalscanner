@@ -1,8 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-export default function handler(req: NextApiRequest, res: NextApiResponse){
-  const items = [
-    { token: "0xabc", symbol: "NOVA", name:"Nova", score: 72, confidence: 82, risk:"LOW", sparkline:[1,2,3,4,5] },
-    { token: "0xdef", symbol: "FLUX", name:"Flux", score: 55, confidence: 64, risk:"MEDIUM", sparkline:[5,4,3,2,1] }
-  ];
-  res.status(200).json(req.query.withTokens ? { items } : items);
+import { db } from "@/lib/db";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { data, error } = await db.scoresWithTokens();
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+
+  const items = (data ?? []).map((r: any) => ({
+    token: r.token,
+    symbol: r.symbol,
+    name: r.name,
+    score: r.score,
+    risk: r.risk,
+    confidence: r.confidence,
+    sparkline: r.sparkline ?? []
+  }));
+
+  // If caller asks for object shape
+  if ("withTokens" in req.query || "expanded" in req.query) {
+    return res.status(200).json({ items });
+  }
+  return res.status(200).json(items);
 }
