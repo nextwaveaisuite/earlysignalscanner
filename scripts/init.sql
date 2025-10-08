@@ -1,67 +1,52 @@
-create extension if not exists pgcrypto;
-
-create table if not exists tokens(
-  id uuid primary key default gen_random_uuid(),
+-- Tokens master (basic metadata)
+create table if not exists tokens (
+  token text primary key,
   symbol text,
-  name text,
-  chain text,
-  address text,
-  website text
+  name text
 );
 
-create table if not exists features_daily(
-  dt date not null,
-  token_id uuid references tokens(id),
-  narrative_momentum double precision,
-  social_breadth double precision,
-  burstiness double precision,
-  liq_health double precision,
-  dev_velocity double precision,
-  tokenomics_quality double precision,
-  risk_penalty double precision,
-  primary key (dt, token_id)
+-- Alerts stream (raw signals)
+create table if not exists alerts (
+  id uuid primary key default gen_random_uuid(),
+  token text references tokens(token),
+  symbol text,
+  message text,
+  score numeric,
+  risk text check (risk in ('LOW','MEDIUM','HIGH')),
+  confidence numeric,
+  created_at timestamptz default now()
 );
 
-create table if not exists scores_daily(
-  dt date not null,
-  token_id uuid references tokens(id),
-  prob_up_4h double precision,
-  composite_score double precision,
-  risk_level text check (risk_level in ('RED','AMBER','GREEN')),
-  confidence text check (confidence in ('LOW','MED','HIGH')),
-  explain jsonb,
-  primary key (dt, token_id)
+-- Scores (latest scoring snapshot per token)
+create table if not exists scores (
+  token text primary key references tokens(token),
+  score numeric,
+  risk text check (risk in ('LOW','MEDIUM','HIGH')),
+  confidence numeric,
+  sparkline numeric[] default '{}',
+  updated_at timestamptz default now()
 );
 
-create table if not exists alerts(
-  id bigserial primary key,
-  dt timestamptz not null default now(),
-  token_id uuid references tokens(id),
-  type text check (type in ('NARRATIVE_BREAKOUT','BREADTH_SURGE','DEV_WAKEUP','RISK_FLIP','FRESH_LAUNCH_SAFE')),
-  severity text check (severity in ('info','warning','critical')),
-  title text,
-  details jsonb
+-- View joining scores + token metadata used by /api/score
+create or replace view scores_with_tokens as
+select
+  s.token,
+  t.symbol,
+  t.name,
+  s.score,
+  s.risk,
+  s.confidence,
+  s.sparkline
+from scores s
+left join tokens t on t.token = s.token;
+
+-- Daily P/L (paper/live aggregation written by your worker)
+create table if not exists daily_pl (
+  date date primary key,
+  realized numeric default 0,
+  unrealized numeric default 0
 );
 
--- Paper trading / risk tables
-create table if not exists paper_orders(
-  id bigserial primary key,
-  ts timestamptz not null default now(),
-  symbol text not null,
-  side text check (side in ('BUY','SELL')) not null,
-  entry numeric not null,
-  qty numeric not null,
-  sl numeric not null,
-  tp numeric not null,
-  status text default 'open'
-);
-
-create table if not exists risk_ledger(
-  d date primary key,
-  realized_pnl numeric default 0,
-  loss_cap numeric default 0
-);
-
-insert into risk_ledger(d, realized_pnl, loss_cap)
-values (current_date, 0, 200)
-on conflict (d) do nothing;
+-- Helpful indexes
+create index if not exists idx_alerts_created_at on alerts(created_at desc);
+create index if not exists idx_scores_score on scores(score desc);
