@@ -88,9 +88,43 @@ export async function getTopSignals(): Promise<ScoreWithToken[]> {
  */
 export async function getScoresWithTokens(): Promise<ScoreWithToken[]> {
   const candidates = ['/api/score?withTokens=1', '/api/score?expanded=1', '/api/score'];
+
   for (const path of candidates) {
     try {
       const data = await fetchJSON<any>(path);
       const items: any[] = Array.isArray(data) ? data : data?.items ?? [];
       return items.map((it) => ({
-        toke
+        token: it.token ?? it.address ?? it.id,
+        symbol: it.symbol ?? it.ticker ?? it.sym,
+        name: it.name ?? it.tokenName,
+        score: typeof it.score === 'number' ? it.score : Number(it.score ?? 0),
+        risk: (it.risk as RiskLevel) ?? undefined,
+        confidence:
+          typeof it.confidence === 'number'
+            ? it.confidence
+            : Number(it.confidence ?? it.conf ?? 0),
+        sparkline: Array.isArray(it.sparkline) ? it.sparkline : it.spark ?? undefined,
+        ...it,
+      })) as ScoreWithToken[];
+    } catch {
+      // try next candidate
+    }
+  }
+
+  // ✅ Explicit fallback so TypeScript is satisfied and builds don't fail
+  console.warn('getScoresWithTokens: no usable /api/score variant found, returning empty array');
+  return [];
+}
+
+/** Daily P/L series for Beginner dashboard */
+export async function getDailyPL(): Promise<DailyPL[]> {
+  try {
+    const data = await fetchJSON<any>('/api/market/stream?mode=daily-pl');
+    const items: any[] = Array.isArray(data) ? data : data?.items ?? [];
+    return items as DailyPL[];
+  } catch {
+    const data = await fetchJSON<any>('/api/market/stream');
+    const items: any[] = Array.isArray(data) ? data : data?.items ?? [];
+    return items as DailyPL[];
+  }
+}
