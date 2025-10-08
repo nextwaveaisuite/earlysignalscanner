@@ -8,9 +8,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) return res.status(500).json({ ok: false, error: error.message });
 
     const items = (data ?? []).map((d: any) => ({
-      date: d.date,
+      date: String(d.date),
       realized: Number(d.realized ?? 0),
-      unrealized: Number(d.unrealized ?? 0)
+      unrealized: Number(d.unrealized ?? 0),
     }));
     return res.status(200).json(items);
   }
