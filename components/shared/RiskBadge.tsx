@@ -1,5 +1,4 @@
-export default function RiskBadge({level}:{level:'GREEN'|'AMBER'|'RED'}){
-  const cls = level==='GREEN'?'badge green':level==='AMBER'?'badge amber':'badge red';
-  const text = level==='GREEN'?'Safety: Green': level==='AMBER'?'Safety: Amber':'Safety: Red';
-  return <span className={cls}>{text}</span>
+export default function RiskBadge({ level="LOW" }: { level?: "LOW"|"MEDIUM"|"HIGH" }) {
+  const color = level==="HIGH" ? "text-red-300" : level==="MEDIUM" ? "text-yellow-300" : "text-emerald-300";
+  return <span className={`badge ${color}`}>Risk: {level}</span>;
 }
