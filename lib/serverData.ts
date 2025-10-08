@@ -1,5 +1,5 @@
 // lib/serverData.ts
-// Fetches via API routes (server-side), so service-role can supply data.
+// SAFE server data helpers: always return [], never throw on SSR.
 
 type Risk = "LOW" | "MEDIUM" | "HIGH" | string | null;
 
@@ -30,41 +30,55 @@ export type DailyPLItem = {
   unrealized: number;
 };
 
-function baseUrl() {
+// Determine absolute site URL for server-side fetch
+function baseUrl(): string {
+  // Prefer explicit custom domain
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
-  const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
-  return explicit || vercel || "http://localhost:3000";
+  if (explicit) return explicit;
+  // Vercel sets VERCEL_URL like "<proj>-<hash>.vercel.app"
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  // Dev fallback
+  return "http://localhost:3000";
 }
 
-// No caching (important for live data)
 const noStore: RequestInit = {
   cache: "no-store",
-  // @ts-ignore - Next runtime hint (fine on server)
+  // @ts-ignore Next.js runtime hint is ok
   next: { revalidate: 0 },
 };
 
-async function getJSON<T>(path: string): Promise<T> {
-  const url = path.startsWith("http") ? path : `${baseUrl()}${path}`;
-  const res = await fetch(url, noStore);
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`GET ${path} failed: ${res.status} ${text}`);
+// SAFE fetch: never throws, logs and returns undefined
+async function fetchJSONSafe<T>(path: string): Promise<T | undefined> {
+  try {
+    const url = path.startsWith("http") ? path : `${baseUrl()}${path}`;
+    const res = await fetch(url, noStore);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(`[serverData] GET ${path} -> ${res.status}: ${text}`);
+      return undefined;
+    }
+    return (await res.json()) as T;
+  } catch (err: any) {
+    console.error(`[serverData] GET ${path} failed:`, err?.message ?? err);
+    return undefined;
   }
-  return (await res.json()) as T;
 }
 
 export async function getAlerts(): Promise<Alert[]> {
-  const data = await getJSON<any>("/api/alerts");
-  return Array.isArray(data) ? data : data?.items ?? [];
+  const data = await fetchJSONSafe<any>("/api/alerts");
+  const items = Array.isArray(data) ? data : data?.items ?? [];
+  return items as Alert[];
 }
 
 export async function getScoresWithTokens(): Promise<ScoreWithToken[]> {
-  const data = await getJSON<any>("/api/score?withTokens=1");
+  // Prefer expanded shape but accept flat arrays too
+  const data = await fetchJSONSafe<any>("/api/score?withTokens=1");
   const items = Array.isArray(data) ? data : data?.items ?? [];
-  return items;
+  return (items ?? []) as ScoreWithToken[];
 }
 
 export async function getDailyPL(): Promise<DailyPLItem[]> {
-  const data = await getJSON<any>("/api/market/stream?mode=daily-pl");
-  return Array.isArray(data) ? data : data?.items ?? [];
+  const data = await fetchJSONSafe<any>("/api/market/stream?mode=daily-pl");
+  const items = Array.isArray(data) ? data : data?.items ?? [];
+  return (items ?? []) as DailyPLItem[];
 }
