@@ -1,27 +1,16 @@
-'use client';
-import { useEffect, useState } from 'react';
+import { getDailyPL } from "@/lib/serverData";
 
-type Ledger = { d:string; realized_pnl:number; loss_cap:number };
-
-export default function DailyPL(){
-  const [ledger, setLedger] = useState<Ledger|undefined>();
-
-  async function load(){
-    const r = await fetch('/api/risk/ledger');
-    const j = await r.json();
-    setLedger(j.ledger);
-  }
-  useEffect(()=>{ load(); const t = setInterval(load, 5000); return ()=>clearInterval(t); },[]);
-
-  const pnl = ledger?.realized_pnl||0; const cap = ledger?.loss_cap||0;
-  const pct = cap>0 ? Math.min(100, Math.max(0, ((pnl+cap)/(2*cap))*100)) : 50;
-
+export default async function DailyPL(){
+  const series = await getDailyPL();
+  if(!series?.length) return <p className="text-slate-400 text-sm">No P/L yet.</p>;
   return (
-    <div className="card" style={{marginTop:16}}>
-      <div className="h1">Daily P/L</div>
-      <div className="kpi"><span className="num">${pnl.toFixed(2)}</span><span className="small"> · Cap: ${cap.toFixed(0)}</span></div>
-      <div className="progress" style={{marginTop:8}}><i style={{width: pct+'%'}}/></div>
-      <div className="small" style={{marginTop:8}}>Updates every 5s. New trades pause once losses reach the cap.</div>
-    </div>
+    <ul className="space-y-2">
+      {series.map((d: any, i: number) => (
+        <li key={i} className="flex justify-between">
+          <span className="text-slate-300 text-sm">{d.date}</span>
+          <span className="text-slate-100 text-sm">R {d.realized ?? 0} / U {d.unrealized ?? 0}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
