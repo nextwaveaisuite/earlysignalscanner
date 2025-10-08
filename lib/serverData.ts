@@ -1,33 +1,62 @@
 // lib/serverData.ts
-import { supa } from '@/lib/db';
+// Server-only data helpers that call our internal API routes.
+// Works on Vercel and locally.
 
-type TokenRow = {
-  prob_up_4h: number;
-  composite_score: number;
-  risk_level: string;
-  confidence: number;
-  explain: string | null;
-  token_id: number;
-  tokens: { symbol: string; name: string; chain: string } | null;
+type AlertItem = {
+  id: string;
+  token: string;
+  symbol?: string;
+  score?: number;
+  risk?: 'LOW' | 'MEDIUM' | 'HIGH';
+  confidence?: number;
+  message?: string;
+  ts?: string;
 };
 
-export async function getScoresWithTokens(): Promise<TokenRow[]> {
-  const today = new Date().toISOString().slice(0, 10);
+type TopSignal = {
+  token: string;
+  symbol?: string;
+  score: number;
+  confidence: number;
+};
 
-  try {
-    const { data, error } = await supa
-      .from('scores_daily')
-      .select(
-        "prob_up_4h, composite_score, risk_level, confidence, explain, token_id, tokens:scores_daily_token_id_fkey(symbol,name,chain)"
-      )
-      .eq('dt', today)
-      .order('composite_score', { ascending: false })
-      .limit(50);
+type DailyPL = {
+  date: string;
+  realized: number;
+  unrealized: number;
+};
 
-    if (error || !data) return [];
-    return data as unknown as TokenRow[];
-  } catch (e) {
-    console.error('getScoresWithTokens error', e);
-    return [];
-  }
+function baseUrl() {
+  // Prefer explicit site URL in env, then Vercel’s URL, else localhost
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  return explicit || vercel || 'http://localhost:3000';
+}
+
+// Ensure we don’t cache time-sensitive data
+const noStore: RequestInit = {
+  // @ts-expect-error next runtime understands this hint
+  next: { revalidate: 0 },
+  cache: 'no-store',
+};
+
+export async function getAlerts(): Promise<AlertItem[]> {
+  const res = await fetch(`${baseUrl()}/api/alerts`, noStore);
+  if (!res.ok) throw new Error(`getAlerts failed: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.items ?? [];
+}
+
+export async function getTopSignals(): Promise<TopSignal[]> {
+  const res = await fetch(`${baseUrl()}/api/score?top=10`, noStore);
+  if (!res.ok) throw new Error(`getTopSignals failed: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.items ?? [];
+}
+
+export async function getDailyPL(): Promise<DailyPL[]> {
+  const res = await fetch(`${baseUrl()}/api/market/stream?mode=daily-pl`, noStore);
+  if (!res.ok) throw new Error(`getDailyPL failed: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.items ?? [];
 }
