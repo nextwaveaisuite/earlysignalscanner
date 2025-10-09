@@ -5,10 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "echo \"(lint not configured)\""
+    "lint": "next lint"
   },
-  // package.json (only showing the "dependencies" section)
-{
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "autoprefixer": "^10.4.20",
@@ -16,13 +14,11 @@
     "postcss": "^8.4.47",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwindcss": "^3.4.14",
-    "rss-parser": "^3.13.0"
-  }
-}
+    "rss-parser": "^3.13.0",
+    "tailwindcss": "^3.4.14"
   },
   "devDependencies": {
-    "@types/node": "^20.14.12",
+    "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "typescript": "^5.6.2"
   }
