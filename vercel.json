@@ -3,3 +3,9 @@
     { "source": "/", "destination": "/beginner", "permanent": true }
   ]
 }
+{
+  "crons": [
+    { "path": "/api/ingest/rss", "schedule": "*/10 * * * *" },
+    { "path": "/api/ingest/reddit", "schedule": "*/10 * * * *" }
+  ]
+}
