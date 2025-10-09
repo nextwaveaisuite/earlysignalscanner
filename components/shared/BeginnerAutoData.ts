@@ -1,32 +1,52 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
-export default function BeginnerAutoData({ initial }:{ initial:{
-  alerts:any[]; scores:any[]; pl:any[];
-}}) {
-  const [alerts, setAlerts] = useState(initial.alerts);
-  const [scores, setScores] = useState(initial.scores);
-  const [pl, setPl] = useState(initial.pl);
+type Item = Record<string, any>;
+
+export default function BeginnerAutoData({
+  initial,
+}: {
+  initial: { alerts: Item[]; scores: Item[]; pl: Item[] };
+}) {
+  const [alerts, setAlerts] = useState<Item[]>(initial.alerts || []);
+  const [scores, setScores] = useState<Item[]>(initial.scores || []);
+  const [pl, setPl] = useState<Item[]>(initial.pl || []);
 
   useEffect(() => {
     let cancel = false;
+
     async function tick() {
       try {
-        const [a,s,p] = await Promise.all([
-          fetch("/api/alerts", { cache:"no-store" }).then(r=>r.json()),
-          fetch("/api/score", { cache:"no-store" }).then(r=>r.json()),
-          fetch("/api/market/stream?mode=daily-pl", { cache:"no-store" }).then(r=>r.json()),
+        const [a, s, p] = await Promise.all([
+          fetch("/api/alerts", { cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/score", { cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/market/stream?mode=daily-pl", { cache: "no-store" }).then((r) => r.json()),
         ]);
-        if (!cancel) { setAlerts(a); setScores(s); setPl(p); }
-      } catch {}
+        if (!cancel) {
+          if (Array.isArray(a)) setAlerts(a);
+          if (Array.isArray(s)) setScores(s);
+          if (Array.isArray(p)) setPl(p);
+        }
+      } catch {
+        // ignore transient fetch errors
+      }
     }
+
+    // poll every 15s
     const t = setInterval(tick, 15000);
-    return () => { cancel = true; clearInterval(t); };
+    return () => {
+      cancel = true;
+      clearInterval(t);
+    };
   }, []);
 
-  // Expose via window for debugging (optional)
-  // @ts-ignore
-  if (typeof window !== "undefined") window.__beginnerData = { alerts, scores, pl };
+  // Optional: expose for quick debugging
+  if (typeof window !== "undefined") {
+    // @ts-ignore
+    window.__beginnerData = { alerts, scores, pl };
+  }
 
-  return null; // data is kept in state; use filters above for UI rendering if needed
+  // This component doesn't render UI; it just keeps data warm for future client widgets.
+  return null;
 }
