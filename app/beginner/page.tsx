@@ -3,7 +3,7 @@ import { getAlerts, getScoresWithTokens, getDailyPL } from "@/lib/serverData";
 import { MiniSpark } from "@/components/shared/MiniSpark";
 import BeginnerAutoData from "@/components/BeginnerAutoData";
 
-// --- tiny UI helpers (server-safe) ---
+// --- small server-safe UI helpers ---
 function RiskBadge({ risk }: { risk: string | null | undefined }) {
   const r = String(risk || "").toUpperCase();
   const color =
@@ -20,11 +20,11 @@ function ConfidenceBadge({ value }: { value: number | null | undefined }) {
 }
 
 export default async function BeginnerPage() {
-  // SSR fetch of initial data
+  // SSR fetch of initial data (no trailing stray characters)
   const [alerts, scores, pl] = await Promise.all([
     getAlerts(),
     getScoresWithTokens(),
-    getDailyPL(),
+    getDailyPL()
   ]);
 
   return (
@@ -47,9 +47,7 @@ export default async function BeginnerPage() {
               alerts.map((a: any) => (
                 <div key={a.id} className="flex items-start justify-between border-b border-white/5 pb-3">
                   <div>
-                    <div className="text-white/80">
-                      {a.symbol ?? "—"} • {a.message}
-                    </div>
+                    <div className="text-white/80">{a.symbol ?? "—"} • {a.message}</div>
                     <div className="text-white/50 text-sm">
                       {a.created_at ? new Date(a.created_at).toLocaleString() : ""}
                     </div>
@@ -112,4 +110,31 @@ export default async function BeginnerPage() {
       {/* Daily P/L */}
       <section className="card p-4">
         <h2 className="font-semibold">Daily P/L</h2>
-        <p className="text-white
+        <p className="text-white/60 mb-3">Paper trading results</p>
+        <div className="space-y-2">
+          {pl?.length ? (
+            pl.map((row: any) => (
+              <div key={row.date} className="flex items-center justify-between border-b border-white/5 py-2">
+                <div>{row.date ? new Date(row.date).toISOString().slice(0, 10) : ""}</div>
+                <div className="text-white/70">R {Number(row.realized ?? 0)} / U {Number(row.unrealized ?? 0)}</div>
+              </div>
+            ))
+          ) : (
+            <div className="text-white/50">No P/L yet.</div>
+          )}
+        </div>
+      </section>
+
+      {/* Glossary */}
+      <section className="card p-4">
+        <h2 className="font-semibold">Glossary</h2>
+        <p className="text-white/70">Plain-English definitions</p>
+        <ul className="mt-2 text-white/70 list-disc pl-5 space-y-1">
+          <li><b>Signal:</b> A data-backed hint a token may move.</li>
+          <li><b>Risk:</b> Relative downside vs upside potential.</li>
+          <li><b>Confidence:</b> Strength of the signal (0–100).</li>
+        </ul>
+      </section>
+    </div>
+  );
+}
