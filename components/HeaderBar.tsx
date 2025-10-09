@@ -1,3 +1,5 @@
+import HealthDot from "./HealthDot";
+
 export default function HeaderBar() {
   return (
     <header className="w-full border-b border-white/10 bg-[#0b0f13]">
@@ -12,6 +14,7 @@ export default function HeaderBar() {
         <nav className="flex items-center gap-4">
           <a href="/" className="text-white/70 hover:text-white text-sm">Home</a>
           <a href="/beginner" className="text-white/70 hover:text-white text-sm">/beginner</a>
+          <HealthDot />
         </nav>
       </div>
     </header>
