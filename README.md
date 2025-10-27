@@ -23,7 +23,6 @@ An AI-powered crypto intelligence platform that detects **early narratives, sent
 2. Create a new Supabase project and run `scripts/init.sql`  
 3. Add your Supabase keys to `.env.local`  
 4. Deploy to [Vercel](https://vercel.com/)
-   
 
 Visit `/beginner` for the paper trading and safety-first dashboard.
 
