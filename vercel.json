@@ -15,18 +15,22 @@
 
     /* === NEW FOR TWITTER/X & TELEGRAM INGEST === */
     "X_BEARER_TOKEN": "YOUR_X_BEARER_TOKEN",
-    "TELEGRAM_RSS_URL": "https://rsshub.app/telegram/channel/yourchannel", 
-    /* Optional Bot method instead of RSS: */
+    "TELEGRAM_RSS_URL": "https://rsshub.app/telegram/channel/yourchannel",
     "TELEGRAM_BOT_TOKEN": "",
-    "TELEGRAM_CHAT_ID": ""
+    "TELEGRAM_CHAT_ID": "",
+
+    /* === BINANCE CONNECTION (Phase 3) === */
+    "BINANCE_MODE": "testnet",
+    "BINANCE_API_KEY": "YOUR_BINANCE_KEY",
+    "BINANCE_API_SECRET": "YOUR_BINANCE_SECRET"
   },
-  {
   "crons": [
     { "path": "/api/ingest/rss", "schedule": "*/10 * * * *" },
     { "path": "/api/ingest/reddit", "schedule": "*/10 * * * *" },
     { "path": "/api/ingest/x", "schedule": "*/10 * * * *" },
     { "path": "/api/ingest/telegram", "schedule": "*/10 * * * *" },
-    { "path": "/api/ingest/fusion", "schedule": "*/2 * * * *" }     // new: recompute triggers every 2 min
+    { "path": "/api/ingest/fusion", "schedule": "*/2 * * * *" },
+    { "path": "/api/paper/mark", "schedule": "*/1 * * * *" },
+    { "path": "/api/trade/trigger", "schedule": "*/5 * * * *" }
   ]
 }
-
