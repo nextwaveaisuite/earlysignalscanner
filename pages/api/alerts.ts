@@ -1,16 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!; // server-side only
-
-const supabase = createClient(url, serviceRole, {
-  auth: { persistSession: false }
-});
+import { supabaseServer } from "../../lib/supabaseServer";
 
 export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from("alerts")
       .select("token_symbol,risk_band,confidence,score,created_at")
       .order("created_at", { ascending: false })
