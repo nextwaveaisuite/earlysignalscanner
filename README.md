@@ -1,15 +1,15 @@
-# SignalRadar (Minimal Build)
+# SignalRadar (minimal)
 
-Autonomous Microcap Crypto Signal & Paper Trading (Binance testnet by default)
+- Next.js 14 + TypeScript
+- Supabase server-side client for /api/alerts
+- Healthcheck at /api/health
 
-## Deploy via GitHub + Vercel
+## Env (Vercel → Project → Settings → Environment Variables)
+Accepts either naming pair:
+- `NEXT_PUBLIC_SUPABASE_URL` **or** `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` **or** `SUPABASE_SERVICE_KEY`
+- (Optional) `NEXT_PUBLIC_SITE_URL`
 
-1. Unzip and upload this folder to a new **GitHub repo**.
-2. In **Vercel**, click **New Project → Import from GitHub** → select your repo.
-3. Add Environment Variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE`
-4. In Supabase SQL Editor → run `supabase.sql`.
-5. Visit `/` — you’ll see seeded alerts.
-6. Cron `/api/ingest/mock` inserts new alerts every 3 minutes.
+## Deploy
+Push to `main` → Vercel auto-builds.
+Open `/api/health` and `/api/alerts`.
