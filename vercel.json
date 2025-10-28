@@ -1,7 +1,3 @@
 {
-  "version": 2,
-  "framework": "nextjs",
-  "crons": [
-    { "path": "/api/ingest/mock", "schedule": "*/3 * * * *" }
-  ]
+  "version": 2
 }
