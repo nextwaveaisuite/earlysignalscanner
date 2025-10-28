@@ -2,33 +2,6 @@
   "version": 2,
   "framework": "nextjs",
   "crons": [
-    {
-      "path": "/api/ingest/rss",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/ingest/reddit",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/ingest/x",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/ingest/telegram",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/ingest/fusion",
-      "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/paper/mark",
-      "schedule": "*/1 * * * *"
-    },
-    {
-      "path": "/api/trade/trigger",
-      "schedule": "*/5 * * * *"
-    }
+    { "path": "/api/ingest/mock", "schedule": "*/3 * * * *" }
   ]
 }
