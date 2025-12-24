@@ -9,8 +9,6 @@ export default async function handler(
     const { data, error } = await supabaseServer
       .from("alerts")
       .select("token_symbol, risk_band, confidence, score, created_at")
-      .not("token_symbol", "is", null)
-      .not("risk_band", "is", null)
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -21,7 +19,7 @@ export default async function handler(
     return res.status(200).json({ alerts: data ?? [] });
   } catch (e: any) {
     return res.status(500).json({
-      error: e?.message || "Server error"
+      error: e?.message || "fetch failed"
     });
   }
 }
