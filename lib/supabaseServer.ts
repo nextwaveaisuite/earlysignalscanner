@@ -1,13 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "./env";
 
-if (!SUPABASE_URL) {
-  throw new Error("Missing SUPABASE URL (set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL).");
-}
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE SERVICE ROLE KEY (set SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY).");
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
 }
 
-export const supabaseServer = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false }
-});
+export const supabaseServer = createClient(
+  supabaseUrl,
+  serviceRoleKey,
+  {
+    auth: {
+      persistSession: false
+    }
+  }
+);
